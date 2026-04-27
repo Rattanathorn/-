@@ -1,0 +1,398 @@
+<!doctype html>
+<html lang="th">
+  <head>
+    <meta charset="UTF-8" />
+    <title>ระบบจัดการนักศึกษาฝึกงาน</title>
+    <script src="https://cdn.jsdelivr.net/npm/xlsx/dist/xlsx.full.min.js"></script>
+
+    <style>
+      body {
+        font-family: Arial;
+        padding: 20px;
+        background: #f4f6f9;
+      }
+      .card {
+        background: white;
+        padding: 15px;
+        border-radius: 8px;
+        margin-bottom: 20px;
+        box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
+      }
+      input,
+      select,
+      button {
+        padding: 6px;
+        margin: 5px;
+      }
+      button {
+        cursor: pointer;
+        border: none;
+        border-radius: 5px;
+      }
+
+      .add-btn {
+        background: #28a745;
+        color: white;
+      }
+      .update-btn {
+        background: #ffc107;
+      }
+      .cancel-btn {
+        background: #6c757d;
+        color: white;
+      }
+      .export-btn {
+        background: #007bff;
+        color: white;
+      }
+      .reset-btn {
+        background: #dc3545;
+        color: white;
+      }
+
+      .editing-banner {
+        background: #fff3cd;
+        padding: 8px;
+        margin-bottom: 10px;
+        border-radius: 6px;
+        display: none;
+      }
+
+      table {
+        border-collapse: collapse;
+        width: 100%;
+        background: white;
+      }
+      th,
+      td {
+        border: 1px solid #ddd;
+        padding: 8px;
+        text-align: center;
+      }
+      th {
+        background: #343a40;
+        color: white;
+      }
+
+      tr.editing-row {
+        outline: 3px solid #ffc107;
+      }
+
+      .จุล {
+        background: #e3f2fd;
+      }
+      .คอม {
+        background: #e8f5e9;
+      }
+      .เคมี {
+        background: #fff3e0;
+      }
+
+      .active {
+        color: green;
+        font-weight: bold;
+      }
+      .finished {
+        color: red;
+        font-weight: bold;
+      }
+
+      .icon-btn {
+        background: none;
+        font-size: 18px;
+      }
+
+      .summary {
+        display: flex;
+        gap: 15px;
+        margin-bottom: 15px;
+        flex-wrap: wrap;
+      }
+      .summary div {
+        background: white;
+        padding: 10px;
+        border-radius: 6px;
+        box-shadow: 0 1px 4px rgba(0, 0, 0, 0.1);
+      }
+    </style>
+  </head>
+  <body>
+    <h2>📋 ระบบจัดการนักศึกษาฝึกงาน / สหกิจ</h2>
+
+    <div class="editing-banner" id="editingBanner">
+      ✏️ ตอนนี้อยู่ในโหมดแก้ไขข้อมูล
+      (กดดินสอซ้ำหรือปุ่มยกเลิกเพื่อออกจากโหมดนี้)
+    </div>
+
+    <div class="card">
+      วันที่เริ่ม <input type="date" id="startDate" /> วันสุดท้าย
+      <input type="date" id="endDate" /> มหาวิทยาลัย
+      <input type="text" id="university" />
+      <br />
+      ประเภท
+      <select id="type">
+        <option>ฝึกงาน</option>
+        <option>สหกิจ</option>
+      </select>
+      จำนวน <input type="number" id="count" min="1" />
+      แผนก
+      <select id="department">
+        <option>จุล</option>
+        <option>คอม</option>
+        <option>เคมี</option>
+      </select>
+
+      <button id="submitBtn" class="add-btn">เพิ่มข้อมูล</button>
+      <button id="cancelBtn" class="cancel-btn" style="display: none">
+        ยกเลิก
+      </button>
+      <button class="export-btn" onclick="exportExcel()">Export .xlsx</button>
+      <button class="reset-btn" onclick="resetData()">ล้างข้อมูล</button>
+    </div>
+
+    <div class="summary">
+      <div>👥 รวมทั้งหมด: <b id="totalAll">0</b></div>
+      <div>✅ กำลังฝึกอยู่: <b id="totalActive">0</b></div>
+      <div>🔬 จุล: <b id="totalจุล">0</b></div>
+      <div>💻 คอม: <b id="totalคอม">0</b></div>
+      <div>🧪 เคมี: <b id="totalเคมี">0</b></div>
+    </div>
+
+    ค้นหา: <input type="text" id="search" placeholder="พิมพ์ชื่อมหาวิทยาลัย" />
+
+    <table>
+      <thead>
+        <tr>
+          <th>วันที่เริ่ม</th>
+          <th>วันสุดท้าย</th>
+          <th>มหาวิทยาลัย</th>
+          <th>ประเภท</th>
+          <th>จำนวน</th>
+          <th>แผนก</th>
+          <th>สถานะ</th>
+          <th>เพิ่มเติม</th>
+        </tr>
+      </thead>
+      <tbody id="tableBody"></tbody>
+    </table>
+
+    <script>
+      let data = JSON.parse(localStorage.getItem("internPro")) || [];
+      let editIndex = null;
+
+      const monthNames = [
+        "มกราคม",
+        "กุมภาพันธ์",
+        "มีนาคม",
+        "เมษายน",
+        "พฤษภาคม",
+        "มิถุนายน",
+        "กรกฎาคม",
+        "สิงหาคม",
+        "กันยายน",
+        "ตุลาคม",
+        "พฤศจิกายน",
+        "ธันวาคม",
+      ];
+
+      function formatThaiDate(dateStr) {
+        const d = new Date(dateStr);
+        return `${d.getDate()} ${monthNames[d.getMonth()]} ${d.getFullYear() + 543}`;
+      }
+
+      function todayStr() {
+        return new Date().toISOString().split("T")[0];
+      }
+
+      function save() {
+        localStorage.setItem("internPro", JSON.stringify(data));
+      }
+
+      function checkStatus(end) {
+        return end >= todayStr()
+          ? '<span class="active">อยู่ระหว่างการฝึกงาน</span>'
+          : '<span class="finished">สิ้นสุดการฝึกงาน</span>';
+      }
+
+      function render() {
+        const keyword = document
+          .getElementById("search")
+          .value.toLowerCase()
+          .trim();
+        const tbody = document.getElementById("tableBody");
+        tbody.innerHTML = "";
+
+        let totalAll = 0,
+          totalActive = 0,
+          totalจุล = 0,
+          totalคอม = 0,
+          totalเคมี = 0;
+
+        data.forEach((item, i) => {
+          const startThai = formatThaiDate(item.startDate);
+          const endThai = formatThaiDate(item.endDate);
+          const statusText =
+            item.endDate >= todayStr() ? "กำลังฝึกงาน" : "จบแล้ว";
+
+          const searchableText = `
+${startThai}
+${endThai}
+${item.university}
+${item.type}
+${item.count}
+${item.department}
+${statusText}
+`.toLowerCase();
+
+          if (keyword === "" || searchableText.includes(keyword)) {
+            totalAll += +item.count;
+            if (item.endDate >= todayStr()) totalActive += +item.count;
+            if (item.department === "จุล") totalจุล += +item.count;
+            if (item.department === "คอม") totalคอม += +item.count;
+            if (item.department === "เคมี") totalเคมี += +item.count;
+
+            tbody.innerHTML += `
+<tr class="${item.department} ${i === editIndex ? "editing-row" : ""}">
+<td>${startThai}</td>
+<td>${endThai}</td>
+<td>${item.university}</td>
+<td>${item.type}</td>
+<td>${item.count}</td>
+<td>${item.department}</td>
+<td>${checkStatus(item.endDate)}</td>
+<td>
+<button class="icon-btn" onclick="toggleEdit(${i})">✏️</button>
+<button class="icon-btn" onclick="deleteRow(${i})">🗑️</button>
+</td>
+</tr>`;
+          }
+        });
+
+        document.getElementById("totalAll").innerText = totalAll;
+        document.getElementById("totalActive").innerText = totalActive;
+        document.getElementById("totalจุล").innerText = totalจุล;
+        document.getElementById("totalคอม").innerText = totalคอม;
+        document.getElementById("totalเคมี").innerText = totalเคมี;
+      }
+
+      function getForm() {
+        const s = startDate.value;
+        const e = endDate.value;
+        const u = university.value.trim();
+        const t = type.value;
+        const c = count.value;
+        const d = department.value;
+
+        if (!s || !e || !u || !c) return (alert("กรอกข้อมูลให้ครบ"), null);
+        if (e < s) return (alert("วันสุดท้ายต้องไม่น้อยกว่าวันที่เริ่ม"), null);
+
+        return {
+          startDate: s,
+          endDate: e,
+          university: u,
+          type: t,
+          count: c,
+          department: d,
+        };
+      }
+
+      submitBtn.onclick = function () {
+        const form = getForm();
+        if (!form) return;
+
+        if (editIndex === null) {
+          data.unshift(form); // ✅ ล่าสุดบนสุด
+        } else {
+          data[editIndex] = form;
+          exitEdit();
+        }
+        save();
+        clearForm();
+        render();
+        startDate.focus();
+      };
+
+      function toggleEdit(i) {
+        if (editIndex === i) {
+          exitEdit();
+          return;
+        }
+        editIndex = i;
+        const item = data[i];
+        startDate.value = item.startDate;
+        endDate.value = item.endDate;
+        university.value = item.university;
+        type.value = item.type;
+        count.value = item.count;
+        department.value = item.department;
+
+        submitBtn.textContent = "บันทึกการแก้ไข";
+        submitBtn.className = "update-btn";
+        cancelBtn.style.display = "inline-block";
+        editingBanner.style.display = "block";
+        render();
+        window.scrollTo({ top: 0, behavior: "smooth" });
+      }
+
+      function exitEdit() {
+        editIndex = null;
+        submitBtn.textContent = "เพิ่มข้อมูล";
+        submitBtn.className = "add-btn";
+        cancelBtn.style.display = "none";
+        editingBanner.style.display = "none";
+        clearForm();
+        render();
+      }
+
+      cancelBtn.onclick = exitEdit;
+
+      function deleteRow(i) {
+        if (confirm("ยืนยันการลบข้อมูลนี้ใช่หรือไม่?")) {
+          data.splice(i, 1);
+          save();
+          render();
+        }
+      }
+
+      function clearForm() {
+        startDate.value = "";
+        endDate.value = "";
+        university.value = "";
+        count.value = "";
+      }
+
+      function resetData() {
+        if (confirm("ล้างข้อมูลทั้งหมด?")) {
+          localStorage.removeItem("internPro");
+          location.reload();
+        }
+      }
+
+      function exportExcel() {
+        let exportData = data.map((item) => ({
+          วันที่เริ่ม: formatThaiDate(item.startDate),
+          วันสุดท้าย: formatThaiDate(item.endDate),
+          มหาวิทยาลัย: item.university,
+          ประเภท: item.type,
+          จำนวน: item.count,
+          แผนก: item.department,
+          สถานะ:
+            item.endDate >= todayStr()
+              ? "อยู่ระหว่างการฝึกงาน"
+              : "สิ้นสุดการฝึกงาน",
+        }));
+        let ws = XLSX.utils.json_to_sheet(exportData);
+        let wb = XLSX.utils.book_new();
+        XLSX.utils.book_append_sheet(wb, ws, "InternData");
+        XLSX.writeFile(wb, "intern_data.xlsx");
+      }
+
+      document.getElementById("search").addEventListener("input", render);
+      document.addEventListener("keydown", (e) => {
+        if (e.key === "Enter") submitBtn.click();
+      });
+
+      render();
+    </script>
+  </body>
+</html>
