@@ -5,28 +5,16 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>ระบบบริหารจัดการนักศึกษาฝึกงาน</title>
 
-<!-- SheetJS -->
 <script src="https://cdn.jsdelivr.net/npm/xlsx/dist/xlsx.full.min.js"></script>
 
 <style>
+
 body{
-    font-family: Arial, sans-serif;
-    background:#f4f6f9;
     margin:0;
     padding:20px;
-}
-
-h1{
-    margin-bottom:10px;
+    font-family:Arial,sans-serif;
+    background:#f4f6f9;
     color:#2c3e50;
-}
-
-.card{
-    background:white;
-    padding:15px;
-    border-radius:10px;
-    box-shadow:0 2px 8px rgba(0,0,0,0.1);
-    margin-bottom:20px;
 }
 
 input, select, button{
@@ -39,6 +27,11 @@ input, select, button{
 button{
     cursor:pointer;
     border:none;
+    transition:0.2s;
+}
+
+button:hover{
+    opacity:0.9;
 }
 
 .add-btn{
@@ -65,6 +58,24 @@ button{
     color:white;
 }
 
+.login-btn{
+    background:#343a40;
+    color:white;
+}
+
+.logout-btn{
+    background:#fd7e14;
+    color:white;
+}
+
+.card{
+    background:white;
+    padding:15px;
+    border-radius:12px;
+    box-shadow:0 2px 10px rgba(0,0,0,0.08);
+    margin-bottom:20px;
+}
+
 .summary-container{
     display:grid;
     grid-template-columns:repeat(auto-fit,minmax(180px,1fr));
@@ -74,39 +85,95 @@ button{
 
 .summary-card{
     background:white;
-    border-radius:10px;
     padding:15px;
-    box-shadow:0 2px 8px rgba(0,0,0,0.1);
+    border-radius:12px;
     text-align:center;
+    box-shadow:0 2px 10px rgba(0,0,0,0.08);
 }
 
 .summary-card h3{
     margin:0;
-    font-size:16px;
-    color:#555;
+    font-size:15px;
 }
 
 .summary-card p{
+    margin-top:10px;
     font-size:24px;
-    margin:10px 0 0;
     font-weight:bold;
 }
 
-.total-card{ border-left:6px solid #3498db; }
-.active-card{ border-left:6px solid #28a745; }
-.finished-card{ border-left:6px solid #dc3545; }
+.total-card{
+    border-left:6px solid #3498db;
+}
+
+.active-card{
+    border-left:6px solid #28a745;
+}
+
+.finished-card{
+    border-left:6px solid #dc3545;
+}
+
+.top-bar{
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    flex-wrap:wrap;
+    gap:10px;
+    margin-bottom:15px;
+}
+
+.tabs{
+    display:flex;
+    gap:10px;
+    flex-wrap:wrap;
+}
+
+.tab-btn{
+    padding:10px 20px;
+    border-radius:8px;
+    color:white;
+    font-weight:bold;
+}
+
+.active-tab{
+    background:#28a745;
+}
+
+.finished-tab{
+    background:#dc3545;
+}
+
+.summary-tab{
+    background:#6f42c1;
+    color:white;
+}
+
+.search-box{
+    width:320px;
+    padding:10px;
+}
+
+.table-wrapper{
+    display:none;
+}
+
+.table-wrapper.active{
+    display:block;
+}
 
 table{
     width:100%;
     border-collapse:collapse;
     background:white;
-    border-radius:10px;
+    border-radius:12px;
     overflow:hidden;
+    box-shadow:0 2px 10px rgba(0,0,0,0.08);
 }
 
 th, td{
-    padding:10px;
     border:1px solid #ddd;
+    padding:10px;
     text-align:center;
 }
 
@@ -115,7 +182,11 @@ th{
     color:white;
 }
 
-tr.editing-row{
+tr:hover{
+    background:#f1f1f1;
+}
+
+.editing-row{
     outline:3px solid #ffc107;
 }
 
@@ -123,7 +194,7 @@ tr.editing-row{
     background:#e3f2fd;
 }
 
-.สาสนเทศและเทคโนโลยี{
+.สารสนเทศและเทคโนโลยี{
     background:#e8f5e9;
 }
 
@@ -135,12 +206,12 @@ tr.editing-row{
     background:#f3e5f5;
 }
 
-.active{
+.active-status{
     color:green;
     font-weight:bold;
 }
 
-.finished{
+.finished-status{
     color:red;
     font-weight:bold;
 }
@@ -148,6 +219,14 @@ tr.editing-row{
 .icon-btn{
     background:none;
     font-size:18px;
+}
+
+.badge{
+    background:white;
+    color:black;
+    padding:2px 10px;
+    border-radius:20px;
+    margin-left:5px;
 }
 
 .editing-banner{
@@ -158,31 +237,87 @@ tr.editing-row{
     display:none;
 }
 
-.search-box{
-    margin-bottom:15px;
+#loginModal{
+    position:fixed;
+    inset:0;
+    background:rgba(0,0,0,0.5);
+    display:none;
+    justify-content:center;
+    align-items:center;
+    z-index:999;
+}
+
+.modal-content{
+    background:white;
+    padding:25px;
+    border-radius:12px;
+    width:320px;
 }
 
 @media(max-width:768px){
-    table{
-        font-size:12px;
-    }
 
     input, select, button{
         width:100%;
         box-sizing:border-box;
     }
+
+    .search-box{
+        width:100%;
+    }
+
+    table{
+        font-size:12px;
+    }
+
 }
+
 </style>
 </head>
+
 <body>
 
-<h1>📋 ระบบบริหารจัดการนักศึกษาฝึกงาน / สหกิจศึกษา</h1>
+<!-- HEADER -->
 
-<div class="editing-banner" id="editingBanner">
-✏️ กำลังแก้ไขข้อมูล (กดดินสอซ้ำหรือกดปุ่มยกเลิกเพื่อออก)
+<div style="
+display:flex;
+justify-content:space-between;
+align-items:center;
+flex-wrap:wrap;
+margin-bottom:20px;
+">
+
+<h1 style="margin:0;">
+📋 ระบบบริหารจัดการนักศึกษาฝึกงาน / สหกิจศึกษา
+</h1>
+
+<div>
+
+<button id="loginBtn"
+class="login-btn"
+onclick="openLogin()">
+🔐 Login Admin
+</button>
+
+<button id="logoutBtn"
+class="logout-btn"
+onclick="logout()"
+style="display:none;">
+🚪 Logout
+</button>
+
 </div>
 
-<div class="card">
+</div>
+
+<!-- EDITING -->
+
+<div class="editing-banner" id="editingBanner">
+✏️ กำลังแก้ไขข้อมูล
+</div>
+
+<!-- FORM -->
+
+<div class="card" id="adminPanel" style="display:none;">
 
 วันที่เริ่ม
 <input type="date" id="startDate">
@@ -215,12 +350,24 @@ tr.editing-row{
 
 <br>
 
-<button id="submitBtn" class="add-btn">เพิ่มข้อมูล</button>
-<button id="cancelBtn" class="cancel-btn" style="display:none;">ยกเลิก</button>
-<button class="export-btn" onclick="exportExcel()">Export .xlsx</button>
-<button class="reset-btn" onclick="resetData()">ล้างข้อมูล</button>
+<button id="submitBtn" class="add-btn">
+เพิ่มข้อมูล
+</button>
+
+<button id="cancelBtn"
+class="cancel-btn"
+style="display:none;">
+ยกเลิก
+</button>
+
+<button class="reset-btn"
+onclick="resetData()">
+ล้างข้อมูล
+</button>
 
 </div>
+
+<!-- SUMMARY -->
 
 <div class="summary-container">
 
@@ -239,31 +386,55 @@ tr.editing-row{
 <p id="totalFinished">0</p>
 </div>
 
-<div class="summary-card">
-<h3>🧫 จุลชีววิทยา</h3>
-<p id="totalMicro">0</p>
 </div>
 
-<div class="summary-card">
-<h3>💻 สารสนเทศและเทคโนโลยี</h3>
-<p id="totalIT">0</p>
+<!-- TOP BAR -->
+
+<div class="top-bar">
+
+<div class="tabs">
+
+<button class="tab-btn active-tab"
+onclick="switchTab('active')">
+✅ กำลังฝึกงาน
+<span class="badge" id="activeCount">0</span>
+</button>
+
+<button class="tab-btn finished-tab"
+onclick="switchTab('finished')">
+🔴 สิ้นสุดการฝึกงาน
+<span class="badge" id="finishedCount">0</span>
+</button>
+
+<!-- ✅ SUMMARY TAB -->
+
+<button class="tab-btn summary-tab"
+onclick="switchTab('summary')">
+📊 สรุปข้อมูล
+</button>
+
 </div>
 
-<div class="summary-card">
-<h3>🧪 เคมีวิเคราะห์</h3>
-<p id="totalChem">0</p>
+<div>
+
+<input type="text"
+id="search"
+class="search-box"
+placeholder="🔍 ค้นหาได้ทุกข้อมูล">
+
+<button class="export-btn"
+onclick="exportExcel()">
+Export .xlsx
+</button>
+
 </div>
 
-<div class="summary-card">
-<h3>📁 บริหารงานทั่วไป</h3>
-<p id="totalAdmin">0</p>
 </div>
 
-</div>
+<!-- ACTIVE TABLE -->
 
-<div class="search-box">
-<input type="text" id="search" placeholder="🔍 ค้นหาได้ทุกข้อมูลในตาราง" style="width:100%;padding:10px;">
-</div>
+<div id="activeWrapper"
+class="table-wrapper active">
 
 <table>
 
@@ -280,45 +451,250 @@ tr.editing-row{
 </tr>
 </thead>
 
-<tbody id="tableBody"></tbody>
+<tbody id="activeTable"></tbody>
 
 </table>
 
+</div>
+
+<!-- FINISHED TABLE -->
+
+<div id="finishedWrapper"
+class="table-wrapper">
+
+<table>
+
+<thead>
+<tr>
+<th>วันที่เริ่ม</th>
+<th>วันสุดท้าย</th>
+<th>สถานศึกษา</th>
+<th>ประเภท</th>
+<th>จำนวน</th>
+<th>แผนก</th>
+<th>สถานะ</th>
+<th>เพิ่มเติม</th>
+</tr>
+</thead>
+
+<tbody id="finishedTable"></tbody>
+
+</table>
+
+</div>
+
+<!-- ✅ SUMMARY WRAPPER -->
+
+<div id="summaryWrapper"
+class="table-wrapper">
+
+<div class="card">
+
+<h2>📊 สรุปข้อมูลทั้งหมด</h2>
+
+<div id="summaryContent"
+style="line-height:2;font-size:16px;">
+</div>
+
+</div>
+
+</div>
+
+<!-- LOGIN -->
+
+<div id="loginModal">
+
+<div class="modal-content">
+
+<h2>🔐 Admin Login</h2>
+
+<input type="text"
+id="username"
+placeholder="Username"
+style="width:100%;">
+
+<input type="password"
+id="password"
+placeholder="Password"
+style="width:100%;">
+
+<br><br>
+
+<button class="login-btn"
+onclick="login()"
+style="width:100%;">
+เข้าสู่ระบบ
+</button>
+
+</div>
+
+</div>
+
 <script>
 
-let data = JSON.parse(localStorage.getItem("internSystemV2")) || [];
+let data =
+JSON.parse(localStorage.getItem("internEnterpriseFinal"))
+|| [];
+
 let editIndex = null;
+
+const ADMIN_USER = "admin";
+const ADMIN_PASS = "1234";
 
 const monthNames = [
 "มกราคม","กุมภาพันธ์","มีนาคม","เมษายน","พฤษภาคม","มิถุนายน",
 "กรกฎาคม","สิงหาคม","กันยายน","ตุลาคม","พฤศจิกายน","ธันวาคม"
 ];
 
+function isAdmin(){
+
+    return sessionStorage.getItem("adminLogged")
+    === "true";
+
+}
+
+function openLogin(){
+
+    document.getElementById("loginModal")
+    .style.display = "flex";
+
+}
+
+function login(){
+
+    const user =
+    document.getElementById("username").value;
+
+    const pass =
+    document.getElementById("password").value;
+
+    if(user === ADMIN_USER && pass === ADMIN_PASS){
+
+        sessionStorage.setItem("adminLogged","true");
+
+        document.getElementById("loginModal")
+        .style.display = "none";
+
+        setupAdmin();
+
+        render();
+
+    }else{
+
+        alert("Username หรือ Password ไม่ถูกต้อง");
+
+    }
+
+}
+
+function logout(){
+
+    sessionStorage.removeItem("adminLogged");
+
+    location.reload();
+
+}
+
+function setupAdmin(){
+
+    if(isAdmin()){
+
+        document.getElementById("adminPanel")
+        .style.display = "block";
+
+        document.getElementById("loginBtn")
+        .style.display = "none";
+
+        document.getElementById("logoutBtn")
+        .style.display = "inline-block";
+
+    }
+
+}
+
 function formatThaiDate(dateStr){
+
     const d = new Date(dateStr);
+
     return `${d.getDate()} ${monthNames[d.getMonth()]} ${d.getFullYear()+543}`;
+
 }
 
 function todayStr(){
+
     return new Date().toISOString().split("T")[0];
+
+}
+
+function getStatus(endDate){
+
+    return endDate >= todayStr()
+    ? "กำลังฝึกงาน"
+    : "สิ้นสุดการฝึกงาน";
+
+}
+
+function getStatusHTML(endDate){
+
+    return endDate >= todayStr()
+    ? '<span class="active-status">กำลังฝึกงาน</span>'
+    : '<span class="finished-status">สิ้นสุดการฝึกงาน</span>';
+
 }
 
 function saveData(){
-    localStorage.setItem("internSystemV2", JSON.stringify(data));
+
+    localStorage.setItem(
+        "internEnterpriseFinal",
+        JSON.stringify(data)
+    );
+
 }
 
-function checkStatus(endDate){
-    return endDate >= todayStr()
-    ? '<span class="active">กำลังฝึกงาน</span>'
-    : '<span class="finished">สิ้นสุดการฝึกงาน</span>';
+function switchTab(tab){
+
+    document.getElementById("activeWrapper")
+    .classList.remove("active");
+
+    document.getElementById("finishedWrapper")
+    .classList.remove("active");
+
+    document.getElementById("summaryWrapper")
+    .classList.remove("active");
+
+    if(tab === "active"){
+
+        document.getElementById("activeWrapper")
+        .classList.add("active");
+
+    }else if(tab === "finished"){
+
+        document.getElementById("finishedWrapper")
+        .classList.add("active");
+
+    }else{
+
+        document.getElementById("summaryWrapper")
+        .classList.add("active");
+
+    }
+
 }
 
 function render(){
 
-    const keyword = document.getElementById("search").value.toLowerCase();
-    const tableBody = document.getElementById("tableBody");
+    const keyword =
+    document.getElementById("search")
+    .value.toLowerCase();
 
-    tableBody.innerHTML = "";
+    const activeTable =
+    document.getElementById("activeTable");
+
+    const finishedTable =
+    document.getElementById("finishedTable");
+
+    activeTable.innerHTML = "";
+    finishedTable.innerHTML = "";
 
     let totalAll = 0;
     let totalActive = 0;
@@ -331,13 +707,14 @@ function render(){
 
     data.forEach((item,index)=>{
 
-        const startThai = formatThaiDate(item.startDate);
-        const endThai = formatThaiDate(item.endDate);
+        const startThai =
+        formatThaiDate(item.startDate);
 
-        const statusText =
-        item.endDate >= todayStr()
-        ? "กำลังฝึกงาน"
-        : "สิ้นสุดการฝึกงาน";
+        const endThai =
+        formatThaiDate(item.endDate);
+
+        const status =
+        getStatus(item.endDate);
 
         const searchable = `
         ${startThai}
@@ -346,71 +723,167 @@ function render(){
         ${item.type}
         ${item.count}
         ${item.department}
-        ${statusText}
+        ${status}
         `.toLowerCase();
 
-        if(searchable.includes(keyword)){
+        if(!searchable.includes(keyword)) return;
 
-            totalAll += +item.count;
+        totalAll += Number(item.count);
 
-            if(item.endDate >= todayStr()){
-                totalActive += +item.count;
-            }else{
-                totalFinished += +item.count;
+        if(status === "กำลังฝึกงาน"){
+
+            totalActive += Number(item.count);
+
+        }else{
+
+            totalFinished += Number(item.count);
+
+        }
+
+        if(item.department === "จุลชีววิทยา")
+        totalMicro += Number(item.count);
+
+        if(item.department === "สารสนเทศและเทคโนโลยี")
+        totalIT += Number(item.count);
+
+        if(item.department === "เคมีวิเคราะห์")
+        totalChem += Number(item.count);
+
+        if(item.department === "บริหารงานทั่วไป")
+        totalAdmin += Number(item.count);
+
+        let manageButtons = "-";
+
+        if(isAdmin()){
+
+            manageButtons = "";
+
+            if(status === "กำลังฝึกงาน"){
+
+                manageButtons += `
+                <button class="icon-btn"
+                onclick="toggleEdit(${index})">
+                ✏️
+                </button>
+                `;
+
             }
 
-            if(item.department === "จุลชีววิทยา") totalMicro += +item.count;
-            if(item.department === "สารสนเทศและเทคโนโลยี") totalIT += +item.count;
-            if(item.department === "เคมีวิเคราะห์") totalChem += +item.count;
-            if(item.department === "บริหารงานทั่วไป") totalAdmin += +item.count;
-
-            tableBody.innerHTML += `
-            <tr class="${item.department} ${index===editIndex ? 'editing-row':''}">
-                <td>${startThai}</td>
-                <td>${endThai}</td>
-                <td>${item.school}</td>
-                <td>${item.type}</td>
-                <td>${item.count}</td>
-                <td>${item.department}</td>
-                <td>${checkStatus(item.endDate)}</td>
-                <td>
-                    <button class="icon-btn" onclick="toggleEdit(${index})">✏️</button>
-                    <button class="icon-btn" onclick="deleteRow(${index})">🗑️</button>
-                </td>
-            </tr>
+            manageButtons += `
+            <button class="icon-btn"
+            onclick="deleteRow(${index})">
+            🗑️
+            </button>
             `;
+
+        }
+
+        const row = `
+        <tr class="
+        ${item.department}
+        ${editIndex===index?'editing-row':''}
+        ">
+
+            <td>${startThai}</td>
+            <td>${endThai}</td>
+            <td>${item.school}</td>
+            <td>${item.type}</td>
+            <td>${item.count}</td>
+            <td>${item.department}</td>
+            <td>${getStatusHTML(item.endDate)}</td>
+            <td>${manageButtons}</td>
+
+        </tr>
+        `;
+
+        if(status === "กำลังฝึกงาน"){
+
+            activeTable.innerHTML += row;
+
+        }else{
+
+            finishedTable.innerHTML += row;
+
         }
 
     });
 
-    document.getElementById("totalAll").innerText = totalAll;
-    document.getElementById("totalActive").innerText = totalActive;
-    document.getElementById("totalFinished").innerText = totalFinished;
+    document.getElementById("totalAll")
+    .innerText = totalAll;
 
-    document.getElementById("totalMicro").innerText = totalMicro;
-    document.getElementById("totalIT").innerText = totalIT;
-    document.getElementById("totalChem").innerText = totalChem;
-    document.getElementById("totalAdmin").innerText = totalAdmin;
+    document.getElementById("totalActive")
+    .innerText = totalActive;
+
+    document.getElementById("totalFinished")
+    .innerText = totalFinished;
+
+    document.getElementById("activeCount")
+    .innerText = totalActive;
+
+    document.getElementById("finishedCount")
+    .innerText = totalFinished;
+
+    // ✅ SUMMARY TAB
+
+    document.getElementById("summaryContent")
+    .innerHTML = `
+    👥 จำนวนทั้งหมด: <b>${totalAll}</b> คน<br><br>
+
+    ✅ ระหว่างฝึกงาน:
+    <b>${totalActive}</b> คน<br>
+
+    🔴 สิ้นสุดการฝึกงาน:
+    <b>${totalFinished}</b> คน<br><br>
+
+    🧫 จุลชีววิทยา:
+    <b>${totalMicro}</b> คน<br>
+
+    💻 สารสนเทศและเทคโนโลยี:
+    <b>${totalIT}</b> คน<br>
+
+    🧪 เคมีวิเคราะห์:
+    <b>${totalChem}</b> คน<br>
+
+    📁 บริหารงานทั่วไป:
+    <b>${totalAdmin}</b> คน
+    `;
 
 }
 
 function getFormData(){
 
-    const startDate = document.getElementById("startDate").value;
-    const endDate = document.getElementById("endDate").value;
-    const school = document.getElementById("school").value.trim();
-    const type = document.getElementById("type").value;
-    const count = document.getElementById("count").value;
-    const department = document.getElementById("department").value;
+    const startDate =
+    document.getElementById("startDate").value;
+
+    const endDate =
+    document.getElementById("endDate").value;
+
+    const school =
+    document.getElementById("school").value.trim();
+
+    const type =
+    document.getElementById("type").value;
+
+    const count =
+    document.getElementById("count").value;
+
+    const department =
+    document.getElementById("department").value;
 
     if(!startDate || !endDate || !school || !count){
+
         alert("กรุณากรอกข้อมูลให้ครบ");
+
         return null;
+
     }
 
     if(endDate < startDate){
+
         alert("วันสุดท้ายต้องไม่น้อยกว่าวันที่เริ่ม");
+
         return null;
+
     }
 
     return {
@@ -421,27 +894,32 @@ function getFormData(){
         count,
         department
     };
+
 }
 
-document.getElementById("submitBtn").onclick = function(){
+document.getElementById("submitBtn")
+.onclick = function(){
 
-    const formData = getFormData();
+    const form = getFormData();
 
-    if(!formData) return;
+    if(!form) return;
 
     if(editIndex === null){
 
-        data.unshift(formData);
+        data.unshift(form);
 
     }else{
 
-        data[editIndex] = formData;
+        data[editIndex] = form;
+
         exitEdit();
 
     }
 
     saveData();
+
     clearForm();
+
     render();
 
 };
@@ -449,33 +927,48 @@ document.getElementById("submitBtn").onclick = function(){
 function toggleEdit(index){
 
     if(editIndex === index){
+
         exitEdit();
+
         return;
+
     }
 
     editIndex = index;
 
     const item = data[index];
 
-    document.getElementById("startDate").value = item.startDate;
-    document.getElementById("endDate").value = item.endDate;
-    document.getElementById("school").value = item.school;
-    document.getElementById("type").value = item.type;
-    document.getElementById("count").value = item.count;
-    document.getElementById("department").value = item.department;
+    document.getElementById("startDate").value =
+    item.startDate;
 
-    document.getElementById("submitBtn").textContent = "บันทึกการแก้ไข";
-    document.getElementById("submitBtn").className = "update-btn";
+    document.getElementById("endDate").value =
+    item.endDate;
 
-    document.getElementById("cancelBtn").style.display = "inline-block";
-    document.getElementById("editingBanner").style.display = "block";
+    document.getElementById("school").value =
+    item.school;
+
+    document.getElementById("type").value =
+    item.type;
+
+    document.getElementById("count").value =
+    item.count;
+
+    document.getElementById("department").value =
+    item.department;
+
+    document.getElementById("submitBtn")
+    .textContent = "บันทึกการแก้ไข";
+
+    document.getElementById("submitBtn")
+    .className = "update-btn";
+
+    document.getElementById("cancelBtn")
+    .style.display = "inline-block";
+
+    document.getElementById("editingBanner")
+    .style.display = "block";
 
     render();
-
-    window.scrollTo({
-        top:0,
-        behavior:"smooth"
-    });
 
 }
 
@@ -483,11 +976,17 @@ function exitEdit(){
 
     editIndex = null;
 
-    document.getElementById("submitBtn").textContent = "เพิ่มข้อมูล";
-    document.getElementById("submitBtn").className = "add-btn";
+    document.getElementById("submitBtn")
+    .textContent = "เพิ่มข้อมูล";
 
-    document.getElementById("cancelBtn").style.display = "none";
-    document.getElementById("editingBanner").style.display = "none";
+    document.getElementById("submitBtn")
+    .className = "add-btn";
+
+    document.getElementById("cancelBtn")
+    .style.display = "none";
+
+    document.getElementById("editingBanner")
+    .style.display = "none";
 
     clearForm();
 
@@ -495,7 +994,8 @@ function exitEdit(){
 
 }
 
-document.getElementById("cancelBtn").onclick = exitEdit;
+document.getElementById("cancelBtn")
+.onclick = exitEdit;
 
 function deleteRow(index){
 
@@ -514,8 +1014,11 @@ function deleteRow(index){
 function clearForm(){
 
     document.getElementById("startDate").value = "";
+
     document.getElementById("endDate").value = "";
+
     document.getElementById("school").value = "";
+
     document.getElementById("count").value = "";
 
 }
@@ -524,7 +1027,9 @@ function resetData(){
 
     if(confirm("ต้องการล้างข้อมูลทั้งหมดหรือไม่?")){
 
-        localStorage.removeItem("internSystemV2");
+        localStorage.removeItem(
+            "internEnterpriseFinal"
+        );
 
         location.reload();
 
@@ -536,26 +1041,45 @@ function exportExcel(){
 
     const exportData = data.map(item=>({
 
-        "วันที่เริ่ม": formatThaiDate(item.startDate),
-        "วันสุดท้าย": formatThaiDate(item.endDate),
-        "สถานศึกษา": item.school,
-        "ประเภท": item.type,
-        "จำนวน": item.count,
-        "แผนก": item.department,
+        "วันที่เริ่ม":
+        formatThaiDate(item.startDate),
+
+        "วันสุดท้าย":
+        formatThaiDate(item.endDate),
+
+        "สถานศึกษา":
+        item.school,
+
+        "ประเภท":
+        item.type,
+
+        "จำนวน":
+        item.count,
+
+        "แผนก":
+        item.department,
+
         "สถานะ":
-        item.endDate >= todayStr()
-        ? "กำลังฝึกงาน"
-        : "สิ้นสุดการฝึกงาน"
+        getStatus(item.endDate)
 
     }));
 
-    const ws = XLSX.utils.json_to_sheet(exportData);
+    const ws =
+    XLSX.utils.json_to_sheet(exportData);
 
-    const wb = XLSX.utils.book_new();
+    const wb =
+    XLSX.utils.book_new();
 
-    XLSX.utils.book_append_sheet(wb, ws, "InternData");
+    XLSX.utils.book_append_sheet(
+        wb,
+        ws,
+        "InternData"
+    );
 
-    XLSX.writeFile(wb, "intern_data.xlsx");
+    XLSX.writeFile(
+        wb,
+        "intern_data.xlsx"
+    );
 
 }
 
@@ -564,11 +1088,16 @@ document.getElementById("search")
 
 document.addEventListener("keydown",(e)=>{
 
-    if(e.key === "Enter"){
-        document.getElementById("submitBtn").click();
+    if(e.key === "Enter" && isAdmin()){
+
+        document.getElementById("submitBtn")
+        .click();
+
     }
 
 });
+
+setupAdmin();
 
 render();
 
